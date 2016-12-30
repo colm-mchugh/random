@@ -1,18 +1,12 @@
 # University of Washington, Programming Languages, Homework 6, hw6runner.rb
 
-# This is the only file you turn in, so do not modify the other files as
-# part of your solution.
-
 class MyPiece < Piece
-  # The constant All_My_Pieces should be declared here
 
-  All_My_Pieces = All_Pieces +
-                  [rotations([[0,0],[1,0],[0,1],[1,1],[2,0]]), # square plus one block
+  All_My_Pieces = All_Pieces +				# 7 original pieces
+                  [rotations([[0,0],[1,0],[0,1],[1,1],[-1,0]]), # square plus one block
                    [[[0,0],[-2, 0], [-1,0],[1,0],[2,0]],      # loong piece
                     [[0,0],[0,-2],[0,-1],[0,1],[0,2]]],
                    rotations([[0,0],[1,0],[0,1]])]  # square minus one block
-
-  # your enhancements here
 
   Cheat_Piece = [[[0, 0]]]
   
@@ -27,7 +21,6 @@ class MyPiece < Piece
 end
 
 class MyBoard < Board
-  # your enhancements here
 
   def initialize (game)
     super(game)
@@ -51,7 +44,7 @@ class MyBoard < Board
     end
   end
 
-  # gets the next piece
+  # gets the next piece; it may be the cheat piece
   def next_piece
     if @cheats
       @current_block = MyPiece.my_cheat_piece(self)
@@ -80,14 +73,15 @@ class MyBoard < Board
 end
 
 class MyTetris < Tetris
-  # your enhancements here
 
+  # Add bindings for 'u' and 'c', in addition to Tetris key bindings
   def key_bindings
     super
     @root.bind('u', proc {@board.flip_180})
     @root.bind('c', proc {@board.inc_cheats})
   end
 
+  # override set_board to create a MyBoard object instead of a Board
   def set_board
     @canvas = TetrisCanvas.new
     @board = MyBoard.new(self)
@@ -97,5 +91,3 @@ class MyTetris < Tetris
   end
   
 end
-
-
