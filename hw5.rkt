@@ -3,7 +3,7 @@
 #lang racket
 (provide (all-defined-out)) ;; so we can put tests in a second file
 
-;; definition of structures for MUPL programs - Do NOT change
+;; definition of structures for MUPL programs 
 (struct var  (string) #:transparent)  ;; a variable, e.g., (var "foo")
 (struct int  (num)    #:transparent)  ;; a constant number, e.g., (int 17)
 (struct add  (e1 e2)  #:transparent)  ;; add two expressions
@@ -20,24 +20,28 @@
 ;; a closure is not in "source" programs but /is/ a MUPL value; it is what functions evaluate to
 (struct closure (env fun) #:transparent) 
 
-;; Problem 1
+; Take a Racket list of MUPL values and produce an analagous MUPL list of the same elements
+; in the same order
 (define (racketlist->mupllist rl)
   (if (null? rl)
       (aunit)
       (apair (car rl) (racketlist->mupllist (cdr rl)))))
 
+; Take a MUPL list and produce a Racket list of the same elements in the same order.
 (define (mupllist->racketlist ml)
   (if (aunit? ml)
       null
       (cons (apair-e1 ml) (mupllist->racketlist (apair-e2 ml)))))
 
-;; Problem 2
-
+; Return the variable associated with the given string in the given environment,
+; or an error if no (str -> var) binding exists in env.
+; contract: (string . var) list * string -> var | error
 (define (envlookup env str)
   (cond [(null? env) (error "unbound variable during evaluation" str)]
         [(equal? (car (car env)) str) (cdr (car env))]
         [#t (envlookup (cdr env) str)]))
 
+; evaluate the MUPL expression e in the environment env
 (define (eval-under-env e env)
   (cond [(var? e) 
          (envlookup env (var-string e))]
@@ -90,39 +94,43 @@
         ;; CHANGE add more cases here
         [#t (error (format "bad MUPL expression: ~v" e))]))
 
-;; Do NOT change
+; evaluate the MUPL expression in an empty environment.
 (define (eval-exp e)
   (eval-under-env e null))
         
-;; Problem 3 (a)
-
+; Return a MUPL expression which when run evaluates e1 and if the result is MUPL aunit
+; then it evaluates and returns e2, else it evaluates and returns e3
 (define (ifaunit e1 e2 e3) (ifgreater (isaunit e1) (int 0) e2 e3))
 
-;; Problem 3 (b)
-
+; mlet* takes a racket list of racket pairs of (string . MUPL expression) and a MUPL expression e2
+; and returns a MUPL expression whose value is e2 evaluated in an environment where each pair of lstlst
+; is evaluated sequentially and the MUPL expression result bound to its pair'd string. 
 (define (mlet* lstlst e2)
   (if (null? lstlst)
       e2
       (let ([e (car lstlst)])
         (mlet (car e) (cdr e) (mlet* (cdr lstlst) e2)))))
 
-;; Problem 3 (c)
-
+; Return a MUPL expression that takes four MUPL expressions e1, e2, e3, e4 and if e1 and e2 are equal
+; integers then return e3 else return e4
 (define (ifeq e1 e2 e3 e4)
   (mlet "_x" e1 (mlet "_y" e2
                       (ifgreater (var "_x") (var "_y") e4
                                                      (ifgreater (var "_y") (var "_x") e4 e3)))))
 
-;; Problem 4 (a)
-
+; mupl-map is a curried function that acts like map (in ML); it takes a MUPL function mapper and
+; returns a MUPL function that takes a MUPL list and applies mapper to every element of the list
+; returning a new MUPL list. A MUPL list is aunit or a pair where the second component is a MUPL list.
 (define mupl-map (fun #f "mapper"
                       (fun "list-loop" "xs"
                            (ifaunit (var "xs")
                                     (aunit)
                                     (apair (call (var "mapper") (fst (var "xs")))
                                            (call (var "list-loop") (snd (var "xs"))))))))
-;; Problem 4 (b)
 
+; Bind to mupl-mapAddN a MUPL function that takes a MUPL integer i and returns a MUPL function that
+; takes a MUPL list of MUPL integers and returns a new MUPL list of MUPL integers that adds i to every
+; element of the list.
 (define mupl-mapAddN 
   (mlet "map" mupl-map
         (fun #f "i"
